@@ -1,29 +1,49 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+#Updated pipeline with customization 
+#This YAML file configures a CI/CD pipeline for a Python Flask project using Docker. CTA2
 
+# Trigger the pipeline when code is pushed to the 'main' branch
 trigger:
-- main
+  - main
 
-resources:
-- repo: self
+# Choose the virtual environment — hosted on Ubuntu
+pool:
+  vmImage: 'ubuntu-latest'
 
-variables:
-  tag: '$(Build.BuildId)'
+# Define pipeline steps
+steps:
 
-stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        tags: |
-          $(tag)
+  # Step 1: Use Python (Version 3.x)
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  # Step 2: Install dependencies from requirements.txt
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: 'Install Dependencies'
+
+  #  Step 3: Run tests (optional — mock step here)
+  - script: |
+      echo "Running tests..."
+  # pytest tests
+    displayName: 'Run Unit Tests'
+
+  #Step 4: Build Docker image
+  - script: |
+      docker build -t flaskapp .
+    displayName: 'Build Docker Image'
+
+  # Step 5: Push Docker image (mocked here — would need Docker credentials)
+  - script: |
+      echo "Pushing image to Docker Hub..."
+  #docker push your-dockerhub-user
+    displayName: 'Push Image to Docker Hub'
+
+  # Step 6: Publish pipeline artifacts (e.g., logs or build files)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
